@@ -1,7 +1,13 @@
-FROM python:3.9
+FROM python:3.12-slim
 
-RUN mkdir /app
+WORKDIR /app
 
-COPY ./main.py /app/
+COPY ./requirements.txt /app/requirements.txt
 
-ENTRYPOINT [ "python3", "/app/main.py" ]
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+
+COPY . /app/
+
+EXPOSE 8080
+
+CMD ["fastapi", "run", "/app/main.py", "--port", "80"]

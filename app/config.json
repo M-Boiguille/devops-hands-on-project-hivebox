@@ -1,3 +1,5 @@
 {
-  "senseBoxIDs": ["5eba5fbad46fb8001b799786","5c21ff8f919bf8001adf2488","5ade1acf223bd80019a1011c"]
+  "last_measure_delta": 60,
+  "comment": "Configuration file for hivebox app",
+  "senseBoxIDs": ["5eba5fbad46fb8001b799786","5c21ff8f919bf8001adf2488","5ade1acf223bd80019a1011c","lolo"]
 }

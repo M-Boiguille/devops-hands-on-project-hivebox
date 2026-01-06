@@ -3,18 +3,37 @@ VERSION="0.0.1"
 IMAGE = $(NAME):$(VERSION)
 APPDIR="app"
 
-.PHONY: run, build, clean
+all: build forced_run
+
+start:
+	@docker start $(NAME)
+
+stop:
+	@docker stop $(NAME)
+
+reload: stop start
 
 run:
-	@docker run --name $(NAME) $(IMAGE)
+	@docker run --env-file app/.env -p 8080:80 --name $(NAME) $(IMAGE)
 
-forced_run: clean run
+detached:
+	@docker run --env-file app/.env -d -p 8080:80 --name $(NAME) $(IMAGE)
 
 temp_run:
-	@docker run --name $(NAME) $(IMAGE) --rm
+	@docker run --env-file app/.env --name $(NAME) $(IMAGE) --rm
 
 build:
 	@docker build -t $(IMAGE) $(APPDIR)
 
+logs:
+	@docker logs $(NAME)
+
 clean:
-	@docker rm hivebox || true
+	@docker rm -f hivebox || true
+
+fclean: clean
+	@docker rmi $(IMAGE) || true
+
+re: fclean build detached
+
+.PHONY: run build clean
