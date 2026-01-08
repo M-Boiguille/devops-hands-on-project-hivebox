@@ -49,7 +49,7 @@ def fetch_sensor_info(url: str) -> dict:
         return response.json()
     except (requests.RequestException, ValueError, KeyError):
         return {}
- 
+
 def time_less_than_delta(sensor: dict, delta: int) -> float | None:
     """
     Extract temperature value if measurement is within the specified time delta.
