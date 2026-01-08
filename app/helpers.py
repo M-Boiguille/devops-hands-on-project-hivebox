@@ -47,7 +47,7 @@ def fetch_sensor_info(url: str) -> dict:
         response = requests.get(url, timeout=5)
         # response.raise_for_status()
         return response.json()
-    except:
+    except (requests.RequestException, ValueError, KeyError):
         return {}
 
 def time_less_than_delta(sensor: dict, delta: int) -> float | None:
@@ -115,10 +115,10 @@ def get_average_temperature(config: dict) -> float | None:
     api_url = os.getenv("OPEN_SENSEBOX_API_URL")
     if not api_url:
         return None
-    
+ 
     total_of_temp = 0
     nb_of_temp = 0
-    
+
     for box_id in config.get("senseBoxIDs", []):
         url = api_url + box_id
         box = fetch_sensor_info(url)
@@ -127,10 +127,10 @@ def get_average_temperature(config: dict) -> float | None:
             continue
         nb_of_temp += 1
         total_of_temp += temp
-    
+
     if nb_of_temp == 0:
         return None
-    
+
     return total_of_temp / nb_of_temp
 
 

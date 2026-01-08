@@ -16,8 +16,8 @@ app = FastAPI()
 def load_conf():
     try:
         return helpers.load_config()
-    except Exception:
-        raise HTTPException(status_code=500, detail="Configuration load failed")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Configuration load failed") from exc
 
 
 @app.get("/")
@@ -50,15 +50,16 @@ async def get_version(config=Depends(load_conf)):
         # Validate that config has version key
         if "version" not in config:
             raise HTTPException(status_code=500, detail="Version not found in configuration")
-        
+
         app_version = os.getenv("APP_VERSION")
         if not helpers.is_semantic(app_version):
-            raise HTTPException(status_code=500, detail=f"Error: invalid app version ({app_version})")
+            message = f"Error: invalid app version ({app_version})"
+            raise HTTPException(status_code=500, detail=message)
         return {"version": app_version}
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Internal server error") from exc
 
 
 @app.get("/temperature")
@@ -91,8 +92,8 @@ async def get_temperature(config=Depends(load_conf)):
             raise HTTPException(status_code=503, detail="No temperature data available")
         return {"temperature": avg_temp}
     except ValueError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Internal server error") from exc
