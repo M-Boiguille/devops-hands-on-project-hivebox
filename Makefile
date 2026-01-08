@@ -1,39 +1,44 @@
-NAME = hivebox
-VERSION="0.0.1"
-IMAGE = $(NAME):$(VERSION)
-APPDIR="app"
+ifneq (,$(wildcard app/.env))
+include app/.env
+export
+endif
 
-all: build forced_run
+NAME = hivebox
+VERSION = $(APP_VERSION)
+IMAGE = $(NAME):$(VERSION)
+APPDIR = app
+
+.PHONY: all start stop reload run detached temp_run build logs clean fclean re
+
+all: build detached
 
 start:
-	@docker start $(NAME)
+	docker start $(NAME)
 
 stop:
-	@docker stop $(NAME)
+	docker stop $(NAME)
 
 reload: stop start
 
 run:
-	@docker run --env-file app/.env -p 8080:80 --name $(NAME) $(IMAGE)
+	docker run --env-file app/.env -p 8080:80 --name $(NAME) $(IMAGE)
 
 detached:
-	@docker run --env-file app/.env -d -p 8080:80 --name $(NAME) $(IMAGE)
+	docker run --env-file app/.env -d -p 8080:80 --name $(NAME) $(IMAGE)
 
 temp_run:
-	@docker run --env-file app/.env --name $(NAME) $(IMAGE) --rm
+	docker run --env-file app/.env --rm $(IMAGE)
 
 build:
-	@docker build -t $(IMAGE) $(APPDIR)
+	docker build -t $(IMAGE) $(APPDIR)
 
 logs:
-	@docker logs $(NAME)
+	docker logs $(NAME)
 
 clean:
-	@docker rm -f hivebox || true
+	docker rm -f $(NAME) || true
 
 fclean: clean
-	@docker rmi $(IMAGE) || true
+	docker rmi $(IMAGE) || true
 
 re: fclean build detached
-
-.PHONY: run build clean

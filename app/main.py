@@ -7,13 +7,17 @@ senseBox IoT devices and provides endpoints for version checking and
 temperature data retrieval.
 """
 import os
-from fastapi import FastAPI
-import helpers
+from fastapi import FastAPI, Depends, HTTPException
+from . import helpers
 
 app = FastAPI()
 
 # Load config once at startup
-config = helpers.load_config("/app/config.json")
+def load_conf():
+    try:
+        return helpers.load_config()
+    except Exception:
+        raise HTTPException(status_code=500, detail="Configuration load failed")
 
 
 @app.get("/")
@@ -28,7 +32,7 @@ async def root():
 
 
 @app.get("/version")
-async def get_version():
+async def get_version(config=Depends(load_conf)):
     """
     Get application version endpoint.
     
@@ -42,14 +46,23 @@ async def get_version():
         >>> GET /version
         {"version": "v1.2.3"}
     """
-    app_version = os.getenv("APP_VERSION")
-    if not helpers.is_semantic(app_version):
-        return {"message": "Error: invalid app version"}
-    return {"version": f"v{app_version}"}
+    try:
+        # Validate that config has version key
+        if "version" not in config:
+            raise HTTPException(status_code=500, detail="Version not found in configuration")
+        
+        app_version = os.getenv("APP_VERSION")
+        if not helpers.is_semantic(app_version):
+            raise HTTPException(status_code=500, detail=f"Error: invalid app version ({app_version})")
+        return {"version": app_version}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.get("/temperature")
-async def get_temperature():
+async def get_temperature(config=Depends(load_conf)):
     """
     Get average temperature from all configured senseBox devices.
     
@@ -66,27 +79,20 @@ async def get_temperature():
         - last_measure_delta: Maximum age of measurements in days
     
     Returns:
-        dict: {"average_temperature": int} with average of recent measurements
-        None: If API URL not configured
+        dict: {"temperature": float} with average of recent measurements
     
     Examples:
         >>> GET /temperature
-        {"average_temperature": 22}
+        {"temperature": 22.5}
     """
-    total_of_temp = 0
-    nb_of_temp = 0
-    api_url = os.getenv("OPEN_SENSEBOX_API_URL")
-
-    if not api_url:
-        return None
-
-    for box_id in config["senseBoxIDs"]:
-        url = api_url + box_id
-        box = helpers.fetch_sensor_info(url)
-        temp = helpers.extract_temp(box, config["last_measure_delta"])
-        if temp is None:
-            continue
-        nb_of_temp += 1
-        total_of_temp += temp
-
-    return {"average_temperature": int(total_of_temp / nb_of_temp)}
+    try:
+        avg_temp = helpers.get_average_temperature(config)
+        if avg_temp is None:
+            raise HTTPException(status_code=503, detail="No temperature data available")
+        return {"temperature": avg_temp}
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")

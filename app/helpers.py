@@ -1,3 +1,4 @@
+import os
 import re
 import json
 from datetime import datetime, timedelta, timezone
@@ -97,7 +98,43 @@ def extract_temp(data: dict, delta: int) -> float | None:
     except (KeyError, TypeError, ValueError):
         return None
 
-def load_config(path: str) -> dict:
+def get_average_temperature(config: dict) -> float | None:
+    """
+    Calculate average temperature from all configured senseBox devices.
+    
+    Args:
+        config: Configuration dictionary containing senseBoxIDs and last_measure_delta
+    
+    Returns:
+        float: Average temperature from recent measurements, or None if no data
+    
+    Raises:
+        ValueError: If data is too old or invalid
+        Exception: For other unexpected errors
+    """
+    api_url = os.getenv("OPEN_SENSEBOX_API_URL")
+    if not api_url:
+        return None
+    
+    total_of_temp = 0
+    nb_of_temp = 0
+    
+    for box_id in config.get("senseBoxIDs", []):
+        url = api_url + box_id
+        box = fetch_sensor_info(url)
+        temp = extract_temp(box, config.get("last_measure_delta", 1))
+        if temp is None:
+            continue
+        nb_of_temp += 1
+        total_of_temp += temp
+    
+    if nb_of_temp == 0:
+        return None
+    
+    return total_of_temp / nb_of_temp
+
+
+def load_config(path: str | None = None) -> dict:
     """
     Load JSON configuration file from filesystem.
     
@@ -111,5 +148,7 @@ def load_config(path: str) -> dict:
         FileNotFoundError: If configuration file does not exist
         json.JSONDecodeError: If file content is not valid JSON
     """
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), "config.json")
     with open(path, encoding="utf-8") as f:
         return json.load(f)

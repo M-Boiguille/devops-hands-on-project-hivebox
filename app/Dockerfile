@@ -1,12 +1,26 @@
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+RUN useradd -m appuser
+
+USER appuser
+
+COPY ./requirements.txt /app/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r \
+  /app/requirements.txt
+
 FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY ./requirements.txt /app/requirements.txt
+COPY --from=builder /home/appuser/.local \
+  /home/appuser/.local/
 
-RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+COPY Dockerfile main.py helpers.py config.json /app/
 
-COPY . /app/
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 EXPOSE 8080
 
