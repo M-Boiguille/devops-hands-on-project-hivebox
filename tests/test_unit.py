@@ -1,5 +1,6 @@
 import pytest
 import os
+import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
@@ -16,6 +17,10 @@ client = TestClient(app)
 # -------------------------
 # FIXTURES
 # -------------------------
+
+def test_app_runs_and_prints_version():
+    result = subprocess.run(["python", "app/main.py"], capture_output=True, text=True)
+    assert "v0." in result.stdout
 
 @pytest.fixture
 def mock_config():

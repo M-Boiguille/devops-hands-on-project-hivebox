@@ -49,7 +49,7 @@ def fetch_sensor_info(url: str) -> dict:
         return response.json()
     except (requests.RequestException, ValueError, KeyError):
         return {}
-
+ 
 def time_less_than_delta(sensor: dict, delta: int) -> float | None:
     """
     Extract temperature value if measurement is within the specified time delta.
@@ -115,7 +115,7 @@ def get_average_temperature(config: dict) -> float | None:
     api_url = os.getenv("OPEN_SENSEBOX_API_URL")
     if not api_url:
         return None
- 
+
     total_of_temp = 0
     nb_of_temp = 0
 
