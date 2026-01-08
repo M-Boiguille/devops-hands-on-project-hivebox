@@ -2,7 +2,9 @@ name: CI — Lint (Docker & Python)
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - phase-*
   pull_request:
 
 jobs:
