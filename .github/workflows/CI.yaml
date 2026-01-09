@@ -66,12 +66,5 @@ jobs:
           pip install -r app/requirements.txt
 
       - name: Run pytest
-        uses: pavelzw/pytest-action@v2
-
-        with:
-          verbose: true
-          emoji: true
-          job-summary: true
-          custom-arguments: "-q"
-          click-to-expand: true
-          report-title: "Test Report"
+        run: |
+          pytest tests -q
