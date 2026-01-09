@@ -8,8 +8,9 @@ temperature data retrieval.
 """
 
 import os
+import sys
 from fastapi import FastAPI, Depends, HTTPException
-from . import helpers
+from app import helpers
 
 app = FastAPI()
 
@@ -103,3 +104,17 @@ async def get_temperature(config=Depends(load_conf)):
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Internal server error") from exc
+
+
+if __name__ == "__main__":
+    import uvicorn
+    # Load and print version for CLI usage
+    try:
+        startup_config = helpers.load_config()
+        startup_version = os.getenv("APP_VERSION", "0.1.0")
+        print(f"HiveBox v{startup_version}")
+        print("Starting server...")
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    except (FileNotFoundError, ValueError, OSError) as e:
+        print(f"Error: {e}")
+        sys.exit(1)
